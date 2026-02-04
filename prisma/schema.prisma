@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Event {
+  id              String   @id @default(cuid())
+  name            String
+  date            DateTime
+  courses         String   // JSON array: ["5Km", "10Km", "하프", "풀코스"]
+  status          String   @default("past") // upcoming, active, past
+  certificateImg  String?
+  photoCertImg    String?
+  siteUrl         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  records         Record[]
+  posters         Poster[]
+}
+
+model Record {
+  id          String   @id @default(cuid())
+  eventId     String
+  bib         String
+  name        String
+  course      String
+  gender      String   // M, F
+  finishTime  String   // HH:MM:SS
+  speed       Float
+  pace        String   // MM:SS
+  splits      String   // JSON array
+  createdAt   DateTime @default(now())
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, bib])
+  @@index([eventId])
+  @@index([bib])
+  @@index([name])
+}
+
+model Poster {
+  id        String   @id @default(cuid())
+  eventId   String?
+  type      String   // "hero", "next"
+  imageUrl  String
+  link      String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  event     Event?   @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  @@index([type])
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String   // bcrypt hash
+  createdAt DateTime @default(now())
+}
